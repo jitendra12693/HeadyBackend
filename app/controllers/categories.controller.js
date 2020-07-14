@@ -30,10 +30,16 @@ exports.create = (req, res) => {
 exports.findAll = (req, res) => {
   const categoryName = req.query.categoryname;
   var condition = categoryName ? { categoryName: { $regex: new RegExp(categoryName), $options: "i" } } : {};
-
+  let globalData;
   Category.find(condition)
     .then(data => {
-      res.send(data);
+      globalData=data;
+      let respoinseData=data.filter(item=>item.parentcategory===0 || item.parentcategory===null || item.parentcategory==='');
+      respoinseData.forEach(element => {
+        var someData= getCategories(element.id);
+        respoinseData[0].ChildCategory = someData;
+      });
+      res.send(respoinseData);
     })
     .catch(err => {
       res.status(500).send({
@@ -41,7 +47,32 @@ exports.findAll = (req, res) => {
           err.message || "Some error occurred while retrieving categories."
       });
     });
+
+    getCategories = function(parentid){
+      let childItem=globalData.filter(item=>item.parentcategory===parentid)
+      if(childItem.length>0){
+        childItem.forEach(element=>{
+          childItem.ChildCategory=element;
+          getCategories(element.id)
+        })
+      }else{
+        return;
+      }
+      return childItem;
+    }
 };
+
+
+
+// exports.getCategories =(data,parentid)=>{
+//   if(parentid!==0 && parentid!==undefined && parentid!==''){
+//     console.log(data);
+//     getCategories(data,parentid)
+//   }else{
+//     return;
+//   }
+// }
+
 
 exports.findOne = (req, res) => {
   const id = req.params.id;

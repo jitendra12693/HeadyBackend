@@ -3,7 +3,7 @@ module.exports = mongoose => {
     {
       categoryname: String,
       description: String,
-      parentcategory: {}
+      parentcategory: String
     },
     { timestamps: true }
   );
