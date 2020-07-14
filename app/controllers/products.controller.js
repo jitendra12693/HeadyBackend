@@ -1,8 +1,7 @@
 const db = require("../models");
 const Product = db.products;
-
+const Category = db.categories;
 exports.create = (req, res) => {
-  // Validate request
   if (!req.body.productname) {
     res.status(400).send({ message: "Product name can not be empty!" });
     return;
@@ -34,17 +33,20 @@ exports.create = (req, res) => {
 exports.findAll = (req, res) => {
   const productname = req.query.productname;
   var condition = productname ? { productname: { $regex: new RegExp(productname), $options: "i" } } : {};
-
-  Product.find(condition)
-    .then(data => {
-      res.send(data);
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving products."
-      });
-    });
+  Product.aggregate([{
+    $lookup: {
+        from: "categories", 
+        localField: "id",
+        foreignField: "category",
+        as: "categoryDetails"
+    }
+}]).exec(function(err, result) {
+    if (err) {
+    throw err;
+    }else{
+      res.send(result);
+    }
+  });
 };
 
 exports.findOne = (req, res) => {
